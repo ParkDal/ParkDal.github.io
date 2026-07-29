@@ -1,23 +1,21 @@
 (() => {
   const canvas = document.querySelector('#game-board');
   const difficultySelect = document.querySelector('#difficulty');
+  const startButton = document.querySelector('#start-game');
   const restartButton = document.querySelector('#restart-game');
   const pauseButton = document.querySelector('#pause-game');
   const scoreElement = document.querySelector('#score');
   const highScoreElement = document.querySelector('#high-score');
   const enemyCountElement = document.querySelector('#enemy-count');
   const statusElement = document.querySelector('#game-status');
-  if (!canvas || !difficultySelect || !restartButton || !pauseButton) return;
+  if (!canvas || !difficultySelect || !startButton || !restartButton || !pauseButton) return;
 
   const ctx = canvas.getContext('2d');
   const columns = 24;
   const rows = 18;
   const cellWidth = canvas.width / columns;
   const cellHeight = canvas.height / rows;
-  const vectors = {
-    up: { x: 0, y: -1 }, down: { x: 0, y: 1 },
-    left: { x: -1, y: 0 }, right: { x: 1, y: 0 }
-  };
+  const vectors = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
   const settingsByLevel = {
     1: { wormDelay: 210, enemyDelay: 330, enemies: 1 },
     2: { wormDelay: 175, enemyDelay: 275, enemies: 2 },
@@ -36,6 +34,7 @@
   let lastFrame = 0;
   let wormClock = 0;
   let enemyClock = 0;
+  let animationTime = 0;
 
   const samePoint = (a, b) => a.x === b.x && a.y === b.y;
   const randomPoint = () => ({ x: Math.floor(Math.random() * columns), y: Math.floor(Math.random() * rows) });
@@ -67,7 +66,6 @@
     const requested = vectors[name];
     if (!requested || (requested.x + direction.x === 0 && requested.y + direction.y === 0)) return;
     queuedDirection = requested;
-    if (state === 'ready') startGame();
   }
 
   function resetGame() {
@@ -81,17 +79,22 @@
     food = { x: 5, y: 5 };
     spawnEnemies(levelSettings().enemies);
     enemyCountElement.textContent = levelSettings().enemies;
+    startButton.hidden = false;
+    restartButton.hidden = true;
+    pauseButton.disabled = true;
     pauseButton.textContent = '일시정지';
-    statusElement.textContent = '방향키 또는 WASD로 시작하세요.';
+    statusElement.textContent = '시작 버튼을 눌러 출발하세요.';
     updateScore();
     draw();
   }
 
   function startGame() {
-    if (state === 'ready') {
-      state = 'playing';
-      statusElement.textContent = '게임 진행 중';
-    }
+    if (state !== 'ready') return;
+    state = 'playing';
+    startButton.hidden = true;
+    restartButton.hidden = false;
+    pauseButton.disabled = false;
+    statusElement.textContent = '게임 진행 중';
   }
 
   function togglePause() {
@@ -107,9 +110,12 @@
       highScore = score;
       localStorage.setItem('parkdal-worm-high-score', String(highScore));
     }
+    startButton.hidden = true;
+    restartButton.hidden = false;
+    pauseButton.disabled = true;
+    pauseButton.textContent = '일시정지';
     updateScore();
     statusElement.textContent = message;
-    pauseButton.textContent = '일시정지';
     draw();
   }
 
@@ -142,36 +148,69 @@
     });
   }
 
-  function drawCell(point, color, radius = 5) {
+  function drawCell(point, color, radius = 5, glow = 0) {
     const pad = 3;
+    ctx.save();
     ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = glow;
     ctx.beginPath();
     ctx.roundRect(point.x * cellWidth + pad, point.y * cellHeight + pad, cellWidth - pad * 2, cellHeight - pad * 2, radius);
     ctx.fill();
+    ctx.restore();
+  }
+
+  function drawHead() {
+    const head = worm[0];
+    drawCell(head, '#e9fff7', 7, 18);
+    const eyeOffset = direction.x !== 0 ? { x: direction.x * 5, y: 4 } : { x: 4, y: direction.y * 5 };
+    ctx.fillStyle = '#0b111b';
+    ctx.beginPath();
+    ctx.arc(head.x * cellWidth + cellWidth / 2 + eyeOffset.x, head.y * cellHeight + cellHeight / 2 + eyeOffset.y, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawOverlay() {
+    if (state === 'playing') return;
+    ctx.save();
+    ctx.fillStyle = 'rgba(5, 8, 15, .62)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#63f5b0';
+    ctx.font = '800 24px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(state === 'ready' ? 'PRESS START' : state === 'paused' ? 'PAUSED' : state === 'won' ? 'MISSION CLEAR' : 'GAME OVER', canvas.width / 2, canvas.height / 2);
+    ctx.restore();
   }
 
   function draw() {
-    ctx.fillStyle = '#0b111b';
+    const background = ctx.createRadialGradient(canvas.width * .5, canvas.height * .4, 20, canvas.width * .5, canvas.height * .4, canvas.width * .8);
+    background.addColorStop(0, '#17283a');
+    background.addColorStop(1, '#070a11');
+    ctx.fillStyle = background;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = 'rgba(99, 245, 176, .08)';
+    ctx.strokeStyle = 'rgba(99, 245, 176, .1)';
     for (let x = 0; x <= columns; x += 1) { ctx.beginPath(); ctx.moveTo(x * cellWidth, 0); ctx.lineTo(x * cellWidth, canvas.height); ctx.stroke(); }
     for (let y = 0; y <= rows; y += 1) { ctx.beginPath(); ctx.moveTo(0, y * cellHeight); ctx.lineTo(canvas.width, y * cellHeight); ctx.stroke(); }
-    drawCell(food, '#ffcf5c', 10);
-    enemies.forEach((enemy) => drawCell(enemy.position, '#ff5c7c'));
-    worm.forEach((segment, index) => drawCell(segment, index === 0 ? '#d9fff0' : '#63f5b0'));
+    const pulse = 12 + Math.sin(animationTime / 180) * 4;
+    drawCell(food, '#ffcf5c', 10, pulse);
+    enemies.forEach((enemy) => drawCell(enemy.position, '#ff5c7c', 7, 14));
+    worm.slice(1).forEach((segment, index) => drawCell(segment, index % 2 ? '#42c995' : '#63f5b0', 7, 8));
+    drawHead();
+    drawOverlay();
   }
 
   function frame(timestamp) {
     if (!lastFrame) lastFrame = timestamp;
     const elapsed = timestamp - lastFrame;
     lastFrame = timestamp;
+    animationTime = timestamp;
     if (state === 'playing') {
       wormClock += elapsed;
       enemyClock += elapsed;
       if (wormClock >= levelSettings().wormDelay) { wormClock = 0; moveWorm(); }
       if (enemyClock >= levelSettings().enemyDelay) { enemyClock = 0; moveEnemies(); }
-      draw();
     }
+    draw();
     requestAnimationFrame(frame);
   }
 
@@ -181,6 +220,7 @@
     if (keys[event.key]) { event.preventDefault(); setDirection(keys[event.key]); }
   });
   document.querySelectorAll('[data-direction]').forEach((button) => button.addEventListener('click', () => setDirection(button.dataset.direction)));
+  startButton.addEventListener('click', startGame);
   restartButton.addEventListener('click', resetGame);
   pauseButton.addEventListener('click', togglePause);
   difficultySelect.addEventListener('change', resetGame);

@@ -74,7 +74,8 @@
             <span>최고 <strong id="high-score">0</strong></span>
           </div>
           <button id="pause-game" class="button button-small button-quiet" type="button">일시정지</button>
-          <button id="restart-game" class="button button-small" type="button">재시작</button>
+          <button id="start-game" class="button button-small" type="button">시작</button>
+          <button id="restart-game" class="button button-small" type="button" hidden>재시작</button>
         </div>
         <div class="game-board-wrap">
           <canvas id="game-board" width="720" height="540" aria-label="지렁이 게임 보드"></canvas>
@@ -82,7 +83,7 @@
         </div>
         <div class="touch-controls" aria-label="터치 방향 조작">
           <button type="button" data-direction="up" aria-label="위로 이동">▲</button>
-          <div>
+          <div class="touch-row">
             <button type="button" data-direction="left" aria-label="왼쪽으로 이동">◀</button>
             <button type="button" data-direction="down" aria-label="아래로 이동">▼</button>
             <button type="button" data-direction="right" aria-label="오른쪽으로 이동">▶</button>

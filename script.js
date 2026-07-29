@@ -24,31 +24,42 @@
   const weatherText = { 0: '맑음', 1: '대체로 맑음', 2: '부분적으로 흐림', 3: '흐림', 45: '안개', 48: '짙은 안개', 51: '이슬비', 61: '비', 71: '눈', 80: '소나기', 95: '뇌우' };
   const currencies = ['USD', 'EUR', 'JPY', 'GBP', 'CNY', 'AUD', 'CAD', 'CHF', 'SGD', 'HKD'];
 
-  async function loadWeather(location = fallbackLocation) {
+  async function fetchJson(url) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 10000);
+    try {
+      const response = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json' } });
+      if (!response.ok) throw new Error(`request-${response.status}`);
+      return await response.json();
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
+  async function loadWeather(location = fallbackLocation, isFallback = location === fallbackLocation) {
     if (!weatherPlace || !weatherValue || !weatherMeta) return;
     weatherPlace.textContent = location.label;
-    weatherMeta.textContent = '날씨를 불러오는 중입니다.';
+    weatherValue.textContent = '...';
+    weatherMeta.textContent = isFallback ? '서울 날씨를 불러오는 중입니다.' : '현재 위치 날씨를 불러오는 중입니다.';
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,weather_code,wind_speed_10m&timezone=auto`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`weather-${response.status}`);
-      const data = await response.json();
+      const data = await fetchJson(url);
       const current = data.current;
-      const timezone = data.timezone || '현지 시간대';
+      if (!current || typeof current.temperature_2m !== 'number') throw new Error('weather-payload');
       weatherPlace.textContent = location.label;
       weatherValue.textContent = `${Math.round(current.temperature_2m)}°C`;
-      weatherMeta.textContent = `${weatherText[current.weather_code] || '현재 날씨'} · 바람 ${Math.round(current.wind_speed_10m)} km/h · ${timezone}`;
+      weatherMeta.textContent = `${weatherText[current.weather_code] || '현재 날씨'} · 바람 ${Math.round(current.wind_speed_10m || 0)} km/h · ${data.timezone || '현지 시간대'}`;
     } catch (error) {
-      if (location !== fallbackLocation) return loadWeather(fallbackLocation);
+      if (!isFallback) return loadWeather(fallbackLocation, true);
       weatherValue.textContent = '--°C';
-      weatherMeta.textContent = '날씨를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
+      weatherMeta.textContent = '날씨를 불러오지 못했습니다. 새로고침을 눌러 다시 시도해주세요.';
     }
   }
 
   function requestWeather() {
     if (!navigator.geolocation) return loadWeather();
     navigator.geolocation.getCurrentPosition(
-      (position) => loadWeather({ latitude: position.coords.latitude, longitude: position.coords.longitude, label: '현재 위치' }),
+      (position) => loadWeather({ latitude: position.coords.latitude, longitude: position.coords.longitude, label: '현재 위치' }, false),
       () => loadWeather(),
       { enableHighAccuracy: false, timeout: 7000, maximumAge: 900000 }
     );
@@ -58,7 +69,7 @@
     if (!exchangeContent) return;
     exchangeContent.innerHTML = currencies.map((currency) => {
       const value = rates[currency];
-      return `<div class="exchange-row"><span>${currency}</span><span>${typeof value === 'number' ? value.toFixed(currency === 'JPY' ? 2 : 4) : '—'}</span></div>`;
+      return `<div class="exchange-row"><span>${currency}</span><span>${typeof value === 'number' && Number.isFinite(value) ? value.toFixed(currency === 'JPY' ? 2 : 4) : '—'}</span></div>`;
     }).join('');
     const note = document.createElement('p');
     note.className = 'exchange-date';
@@ -66,29 +77,38 @@
     exchangeContent.append(note);
   }
 
+  function readExchangeCache(key) {
+    try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (error) { return null; }
+  }
+
   async function loadExchange(force = false) {
     if (!exchangeContent) return;
     const today = new Date().toISOString().slice(0, 10);
     const cacheKey = 'parkdal-exchange-v1';
-    if (!force) {
-      try {
-        const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-        if (cached && cached.day === today) return renderExchange(cached.rates, cached.date);
-      } catch (error) { /* ignore malformed local cache */ }
-    }
+    const cached = readExchangeCache(cacheKey);
+    if (!force && cached?.day === today && cached.rates) return renderExchange(cached.rates, cached.date);
     exchangeContent.innerHTML = '<p>환율을 불러오는 중입니다.</p>';
+    const query = currencies.join(',');
+    const endpoints = [
+      `https://api.frankfurter.dev/v2/rates?base=KRW&quotes=${query}`,
+      `https://api.frankfurter.dev/v1/latest?base=KRW&symbols=${query}`
+    ];
     try {
-      const query = currencies.join(',');
-      const response = await fetch(`https://api.frankfurter.dev/v2/rates?base=KRW&quotes=${query}`);
-      if (!response.ok) throw new Error(`exchange-${response.status}`);
-      const payload = await response.json();
+      let payload;
+      let lastError;
+      for (const endpoint of endpoints) {
+        try { payload = await fetchJson(endpoint); break; } catch (error) { lastError = error; }
+      }
+      if (!payload) throw lastError || new Error('exchange-unavailable');
       const rows = Array.isArray(payload) ? payload : Object.entries(payload.rates || {}).map(([quote, rate]) => ({ quote, rate }));
       const rates = Object.fromEntries(rows.map((row) => [row.quote || row.currency, Number(row.rate)]));
+      if (Object.keys(rates).length === 0) throw new Error('exchange-empty');
       const date = payload.date || rows[0]?.date || today;
-      localStorage.setItem(cacheKey, JSON.stringify({ day: today, date, rates }));
+      try { localStorage.setItem(cacheKey, JSON.stringify({ day: today, date, rates })); } catch (error) { /* cache is optional */ }
       renderExchange(rates, date);
     } catch (error) {
-      exchangeContent.innerHTML = '<p>환율을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>';
+      if (cached?.rates) return renderExchange(cached.rates, cached.date);
+      exchangeContent.innerHTML = '<p>환율을 불러오지 못했습니다. 새로고침을 눌러 다시 시도해주세요.</p>';
     }
   }
 
