@@ -69,11 +69,13 @@
     if (!exchangeContent) return;
     exchangeContent.innerHTML = currencies.map((currency) => {
       const value = rates[currency];
-      return `<div class="exchange-row"><span>${currency}</span><span>${typeof value === 'number' && Number.isFinite(value) ? value.toFixed(currency === 'JPY' ? 2 : 4) : '—'}</span></div>`;
+      const krwPerUnit = typeof value === 'number' && Number.isFinite(value) && value > 0 ? 1 / value : null;
+      const formatted = krwPerUnit === null ? '—' : krwPerUnit.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
+      return `<div class="exchange-row"><span>1 ${currency}</span><span>→ ${formatted} KRW</span></div>`;
     }).join('');
     const note = document.createElement('p');
     note.className = 'exchange-date';
-    note.textContent = `기준일 ${date} · 1 KRW 기준`;
+    note.textContent = `기준일 ${date} · 각 통화 1단위 기준`;
     exchangeContent.append(note);
   }
 
