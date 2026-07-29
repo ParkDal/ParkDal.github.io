@@ -41,8 +41,37 @@ h2 { font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -.05em; }
 .hero-copy, .content-section > p:not(.eyebrow) { color: var(--muted); max-width: 38rem; }
 .button { background: var(--accent); color: #07130e; display: inline-block; font-weight: 800; margin-top: 1rem; padding: .8rem 1.1rem; text-decoration: none; }
 .content-section { border-top: 1px solid var(--line); padding: 5rem 1.5rem; }
+.card-grid, .data-grid { display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 2rem; }
+.info-card, .data-card { background: rgba(17, 21, 34, .75); border: 1px solid var(--line); padding: 1.25rem; }
+.info-card > span, .data-card > small, .data-heading span { color: var(--accent); font-size: .7rem; font-weight: 800; letter-spacing: .14em; }
+.info-card h3, .data-card h3 { margin: .8rem 0 .35rem; }
+.info-card p, .data-card p { color: var(--muted); margin: 0; }
 .game-preview { background: linear-gradient(135deg, rgba(99, 245, 176, .08), transparent); }
-.game-placeholder { border: 1px dashed var(--accent); color: var(--accent); margin-top: 2rem; max-width: 32rem; padding: 2.5rem 1rem; text-align: center; }
+.game-shell { background: rgba(9, 11, 18, .8); border: 1px solid var(--line); margin-top: 2rem; max-width: 760px; padding: 1rem; }
+.game-toolbar { align-items: end; display: flex; flex-wrap: wrap; gap: .8rem; justify-content: space-between; margin-bottom: 1rem; }
+.game-toolbar label { color: var(--muted); display: grid; font-size: .75rem; gap: .25rem; letter-spacing: .08em; text-transform: uppercase; }
+.game-toolbar select { background: var(--panel); border: 1px solid var(--line); color: var(--text); font: inherit; padding: .6rem; }
+.game-stats { color: var(--muted); display: flex; gap: 1rem; }
+.game-stats strong { color: var(--accent); }
+.button-small { border: 0; cursor: pointer; margin-top: 0; }
+.button-quiet { background: transparent; border: 1px solid var(--line); color: var(--text); }
+.game-board-wrap { position: relative; }
+#game-board { background: #0b111b; display: block; height: auto; max-width: 100%; width: 100%; }
+.game-status { color: var(--accent); font-size: .85rem; margin: .8rem 0 0; min-height: 1.6em; }
+.touch-controls { display: grid; gap: .35rem; justify-items: center; margin: 1rem auto .25rem; }
+.touch-controls > div { display: flex; gap: .35rem; }
+.touch-controls button { background: var(--panel); border: 1px solid var(--line); color: var(--text); cursor: pointer; min-height: 2.8rem; min-width: 2.8rem; touch-action: manipulation; }
+.touch-controls button:active, .touch-controls button:hover { background: var(--accent); color: #07130e; }
+.data-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
+.data-heading { align-items: center; display: flex; justify-content: space-between; }
+.data-heading button { background: transparent; border: 1px solid var(--line); color: var(--muted); cursor: pointer; padding: .3rem .5rem; }
+.data-heading button:hover, .data-heading button:focus-visible { border-color: var(--accent); color: var(--accent); }
+.data-value { color: var(--text) !important; font-size: clamp(2.5rem, 7vw, 4.5rem); font-weight: 800; letter-spacing: -.08em; line-height: 1; margin: 1.5rem 0 .75rem !important; }
+.data-card small { display: block; margin-top: 1.5rem; }
+.exchange-content { display: grid; gap: .25rem; margin-top: 1rem; }
+.exchange-row { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; padding: .35rem 0; }
+.exchange-row span:last-child { color: var(--accent); font-variant-numeric: tabular-nums; }
+.contact-section { padding-bottom: 7rem; }
 .site-footer { color: var(--muted); margin: 0 auto; max-width: 1180px; padding: 2rem 1.5rem 3rem; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 @media (max-width: 640px) {
@@ -51,4 +80,7 @@ h2 { font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -.05em; }
   .site-nav { display: none; flex-basis: 100%; flex-direction: column; gap: .7rem; padding-top: .5rem; }
   .site-nav.is-open { display: flex; }
   .hero { min-height: 62vh; padding-top: 5rem; }
+  .game-toolbar { align-items: stretch; flex-direction: column; }
+  .game-stats { justify-content: space-between; }
+  .card-grid, .data-grid { grid-template-columns: 1fr; }
 }

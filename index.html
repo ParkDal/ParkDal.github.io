@@ -7,6 +7,7 @@
   <title>ParkDal | Portfolio</title>
   <link rel="stylesheet" href="styles.css">
   <script src="script.js" defer></script>
+  <script src="game.js" defer></script>
 </head>
 <body>
   <header class="site-header">
@@ -15,8 +16,10 @@
     <nav id="site-nav" class="site-nav" aria-label="주요 메뉴">
       <a href="#about">About</a>
       <a href="#work">Work</a>
+      <a href="#projects">Projects</a>
       <a href="#games">Games</a>
       <a href="#data">Data</a>
+      <a href="#contact">Contact</a>
     </nav>
   </header>
 
@@ -40,17 +43,67 @@
       <p>복잡한 문제를 명확한 흐름과 안정적인 시스템으로 정리합니다.</p>
     </section>
 
+    <section id="projects" class="content-section" aria-labelledby="projects-title">
+      <p class="eyebrow">03 / PROJECTS · EXPERIENCE · RESEARCH</p>
+      <h2 id="projects-title">Selected areas.</h2>
+      <div class="card-grid">
+        <article class="info-card"><span>PROJECTS</span><h3>Systems in motion</h3><p>공개 가능한 프로젝트 상세는 [사람 확인 필요] 항목으로 남겨두었습니다.</p></article>
+        <article class="info-card"><span>EXPERIENCE</span><h3>CP team</h3><p>삼성전자 CP team 업무 경험을 바탕으로 한 프로필 영역입니다.</p></article>
+        <article class="info-card"><span>RESEARCH</span><h3>Explore the signal</h3><p>확인되지 않은 연구·성과·수치는 추가하지 않습니다.</p></article>
+      </div>
+    </section>
+
     <section id="games" class="content-section game-preview" aria-labelledby="games-title">
-      <p class="eyebrow">03 / GAMES</p>
-      <h2 id="games-title">Worm arena is loading.</h2>
-      <p>키보드와 터치로 즐기는 게임 공간을 준비 중입니다.</p>
-      <div class="game-placeholder" role="status">GAME MODULE / COMING SOON</div>
+      <p class="eyebrow">04 / GAMES</p>
+      <h2 id="games-title">Worm arena.</h2>
+      <p>먹이를 10개 먹고 적을 피해 탈출하세요. 키보드 또는 아래 터치 버튼으로 조작할 수 있습니다.</p>
+      <div class="game-shell">
+        <div class="game-toolbar">
+          <label for="difficulty">난이도
+            <select id="difficulty">
+              <option value="1">01 / TRAINING</option>
+              <option value="2">02 / SCOUT</option>
+              <option value="3" selected>03 / HUNTER</option>
+              <option value="4">04 / RUSH</option>
+              <option value="5">05 / NIGHTMARE</option>
+            </select>
+          </label>
+          <div class="game-stats" aria-live="polite">
+            <span>먹이 <strong id="score">0</strong>/10</span>
+            <span>적 <strong id="enemy-count">3</strong></span>
+            <span>최고 <strong id="high-score">0</strong></span>
+          </div>
+          <button id="pause-game" class="button button-small button-quiet" type="button">일시정지</button>
+          <button id="restart-game" class="button button-small" type="button">재시작</button>
+        </div>
+        <div class="game-board-wrap">
+          <canvas id="game-board" width="720" height="540" aria-label="지렁이 게임 보드"></canvas>
+          <p id="game-status" class="game-status" role="status">방향키 또는 WASD로 시작하세요.</p>
+        </div>
+        <div class="touch-controls" aria-label="터치 방향 조작">
+          <button type="button" data-direction="up" aria-label="위로 이동">▲</button>
+          <div>
+            <button type="button" data-direction="left" aria-label="왼쪽으로 이동">◀</button>
+            <button type="button" data-direction="down" aria-label="아래로 이동">▼</button>
+            <button type="button" data-direction="right" aria-label="오른쪽으로 이동">▶</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section id="data" class="content-section" aria-labelledby="data-title">
-      <p class="eyebrow">04 / LIVE DATA</p>
+      <p class="eyebrow">05 / LIVE DATA</p>
       <h2 id="data-title">Weather &amp; exchange rates</h2>
-      <p>날씨와 환율 정보를 연결할 준비가 되어 있습니다.</p>
+      <div class="data-grid">
+        <article class="data-card" id="weather-card"><div class="data-heading"><span>WEATHER</span><button id="weather-refresh" type="button">새로고침</button></div><h3 id="weather-place">위치 확인 중</h3><p id="weather-value" class="data-value">--°C</p><p id="weather-meta">위치 권한을 확인하고 있습니다.</p><small>Source: Open-Meteo</small></article>
+        <article class="data-card" id="exchange-card"><div class="data-heading"><span>EXCHANGE / KRW</span><button id="exchange-refresh" type="button">새로고침</button></div><h3>주요 통화 10종</h3><div id="exchange-content" class="exchange-content"><p>환율을 불러오는 중입니다.</p></div><small>Source: Frankfurter · 하루 1회 갱신</small></article>
+      </div>
+    </section>
+
+    <section id="contact" class="content-section contact-section" aria-labelledby="contact-title">
+      <p class="eyebrow">06 / CONTACT</p>
+      <h2 id="contact-title">Keep exploring.</h2>
+      <p>연락처는 공개하지 않습니다. 이 포트폴리오는 정적 HTML, CSS, JavaScript로 구성됩니다.</p>
     </section>
   </main>
 
